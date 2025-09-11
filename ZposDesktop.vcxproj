@@ -149,7 +149,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
-    <None Include="ZposDesktopManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
