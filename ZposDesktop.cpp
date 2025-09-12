@@ -58,6 +58,33 @@ private:
     static void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd,
         LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 
+    // The context for the window enumeration.
+    struct EnumWindowsContext
+    {
+        // We need a pointer to the Impl instance to call IsWindowRegistered
+        const CZposDesktop::Impl* instance;
+        // A pointer to the vector we want to populate
+        std::vector<HWND>* windowList;
+    };
+
+    // The callback function for EnumWindows.
+    // This function will be called for each top-level window on the screen.
+    static BOOL CALLBACK EnumRegisteredWindowsProc(HWND hwnd, LPARAM lParam)
+    {
+        // The context is passed as lParam.
+        EnumWindowsContext* context = reinterpret_cast<EnumWindowsContext*>(lParam);
+        if (context && context->instance && context->windowList)
+        {
+            // Check if the window is one we are managing.
+            if (context->instance->IsWindowRegistered(hwnd))
+            {
+                // If so, add it to our list.
+                context->windowList->push_back(hwnd);
+            }
+        }
+        return TRUE; // Continue enumeration.
+    }
+
     HWND GetDefaultShellWindow();
     HWND GetDesktopIconsHostWindow();
     bool ShouldUseShellWindowAsDesktopIconsHost();
@@ -374,20 +401,32 @@ bool CZposDesktop::Impl::CheckDesktopState(HWND desktopIconsHostWindow)
 
 void CZposDesktop::Impl::PositionWindowsOnDesktop()
 {
-    // Position all registered windows to stay visible on desktop
-    for (auto& pair : m_windows)
-    {
-        WindowInfo& info = pair.second;
+    std::vector<HWND> windowsInZOrder;
+    EnumWindowsContext context = { this, &windowsInZOrder };
 
-        if (m_showDesktop)
+    // EnumWindows will call our callback for each top-level window.
+    // Our callback will filter for our registered windows and populate the vector.
+    // The windows will be added to the vector in their current Z-order (top-most first).
+    EnumWindows(CZposDesktop::Impl::EnumRegisteredWindowsProc, reinterpret_cast<LPARAM>(&context));
+
+    if (m_showDesktop)
+    {
+        // When showing the desktop, we position our windows after the helper window.
+        // To preserve the Z-order, we must iterate from the bottom-most to the top-most window in our list.
+        // This is because each SetWindowPos call places the window right after the helper,
+        // effectively pushing any previously placed windows down.
+        for (auto it = windowsInZOrder.rbegin(); it != windowsInZOrder.rend(); ++it)
         {
-            // When desktop is showing, position window above desktop but below topmost
-            SetWindowPos(info.hwnd, m_hHelperWindow, 0, 0, 0, 0, ZPOS_FLAGS);
+            SetWindowPos(*it, m_hHelperWindow, 0, 0, 0, 0, ZPOS_FLAGS);
         }
-        else
+    }
+    else
+    {
+        // When showing windows, we move our registered windows to the bottom of the Z-order.
+        // Iterating from top to bottom preserves their relative order at the bottom.
+        for (HWND hwnd : windowsInZOrder)
         {
-            // When windows are showing, position at bottom
-            SetWindowPos(info.hwnd, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
+            SetWindowPos(hwnd, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
         }
     }
 }
@@ -620,3 +659,4 @@ extern "C"
         return false;
     }
 }
+
