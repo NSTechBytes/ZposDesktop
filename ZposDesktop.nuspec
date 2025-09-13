@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>ZposDesktop</id>
+    <version>1.1.0</version>
+    <title>ZposDesktop - Windows Desktop Z-Order Manager</title>
+    <authors>nstechbytes</authors>
+    <description>A Windows library for managing window Z-order and desktop state, allowing windows to stay visible when "Show Desktop" is used.</description>
+    <readme>README.md</readme>
+    <projectUrl>https://github.com/nstechbytes/ZposDesktop</projectUrl>
+    <repository type="git" url="https://github.com/nstechbytes/ZposDesktop.git" />
+    <license type="expression">MIT</license>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <tags>windows desktop z-order window-management native-library pinvoke cpp</tags>
+    <summary>Native Windows library for desktop state management and window Z-order control</summary>
+    <releaseNotes>Initial release with support for Windows 10/11 desktop state detection</releaseNotes>
+    <!-- Remove the native dependency group that was causing the warning -->
+  </metadata>
+  <files>
+    <!-- Include README in package -->
+    <file src="README.md" target="README.md" />
+    
+    <!-- Native binaries -->
+    <file src="x64\Release\ZposDesktop.dll" target="runtimes\win-x64\native\ZposDesktop.dll" />
+    <file src="Release\ZposDesktop.dll" target="runtimes\win-x86\native\ZposDesktop.dll" />
+    <file src="x64\Release\ZposDesktop.lib" target="runtimes\win-x64\native\ZposDesktop.lib" />
+    <file src="Release\ZposDesktop.lib" target="runtimes\win-x86\native\ZposDesktop.lib" />
+
+    <file src="ZposDesktop.cs" target="contentFiles\cs\any\ZposDesktop.cs" />
+    <file src="ZposDesktop.cs" target="content\ZposDesktop.cs" />
+    
+    <!-- Headers -->
+    <file src="ZposDesktop.h" target="build\native\include\ZposDesktop.h" />
+    
+    <!-- MSBuild targets -->
+    <file src="ZposDesktop.targets" target="build\native\ZposDesktop.targets" />
+    
+    <!-- Also include targets in buildTransitive for SDK-style projects -->
+    <file src="ZposDesktop.targets" target="buildTransitive\native\ZposDesktop.targets" />
+  </files>
+</package>

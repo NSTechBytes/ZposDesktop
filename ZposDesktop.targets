@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  
+  <!-- Define the architecture-specific library paths -->
+  <PropertyGroup>
+    <ZposDesktop_IncludePath>$(MSBuildThisFileDirectory)include</ZposDesktop_IncludePath>
+    <ZposDesktop_LibPath_x64>$(MSBuildThisFileDirectory)..\runtimes\win-x64\native</ZposDesktop_LibPath_x64>
+    <ZposDesktop_LibPath_x86>$(MSBuildThisFileDirectory)..\runtimes\win-x86\native</ZposDesktop_LibPath_x86>
+  </PropertyGroup>
+
+  <!-- Include directories -->
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ZposDesktop_IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <!-- Link libraries based on platform -->
+  <ItemDefinitionGroup Condition="'$(Platform)'=='x64' or '$(Platform)'=='X64'">
+    <Link>
+      <AdditionalLibraryDirectories>$(ZposDesktop_LibPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ZposDesktop.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <ItemDefinitionGroup Condition="'$(Platform)'=='Win32' or '$(Platform)'=='x86'">
+    <Link>
+      <AdditionalLibraryDirectories>$(ZposDesktop_LibPath_x86);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ZposDesktop.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <!-- Copy the appropriate DLL to output directory -->
+  <Target Name="ZposDesktop_CopyNativeLibraries" BeforeTargets="Build">
+    
+    <!-- Copy x64 DLL -->
+    <ItemGroup Condition="'$(Platform)'=='x64' or '$(Platform)'=='X64'">
+      <ZposDesktop_NativeLibraries Include="$(ZposDesktop_LibPath_x64)\ZposDesktop.dll">
+        <DestinationFolder>$(OutDir)</DestinationFolder>
+      </ZposDesktop_NativeLibraries>
+    </ItemGroup>
+
+    <!-- Copy x86 DLL -->
+    <ItemGroup Condition="'$(Platform)'=='Win32' or '$(Platform)'=='x86'">
+      <ZposDesktop_NativeLibraries Include="$(ZposDesktop_LibPath_x86)\ZposDesktop.dll">
+        <DestinationFolder>$(OutDir)</DestinationFolder>
+      </ZposDesktop_NativeLibraries>
+    </ItemGroup>
+
+    <!-- Perform the copy -->
+    <Copy SourceFiles="@(ZposDesktop_NativeLibraries)" 
+          DestinationFolder="%(ZposDesktop_NativeLibraries.DestinationFolder)" 
+          SkipUnchangedFiles="true"
+          Condition="Exists('%(ZposDesktop_NativeLibraries.Identity)')" />
+
+    <Message Text="ZposDesktop: Copied native libraries to $(OutDir)" Importance="low" />
+    
+  </Target>
+
+  <!-- Ensure DLLs are included in publish for .NET applications -->
+  <Target Name="ZposDesktop_IncludeNativeLibrariesInPublish" BeforeTargets="PrepareForPublish">
+    
+    <ItemGroup Condition="'$(ZposDesktop_EffectivePlatform)'=='x64' or '$(ZposDesktop_EffectivePlatform)'=='X64' or '$(RuntimeIdentifier)'=='win-x64'">
+      <ResolvedFileToPublish Include="$(ZposDesktop_LibPath_x64)\ZposDesktop.dll">
+        <RelativePath>ZposDesktop.dll</RelativePath>
+        <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(ZposDesktop_EffectivePlatform)'=='Win32' or '$(ZposDesktop_EffectivePlatform)'=='x86' or '$(RuntimeIdentifier)'=='win-x86'">
+      <ResolvedFileToPublish Include="$(ZposDesktop_LibPath_x86)\ZposDesktop.dll">
+        <RelativePath>ZposDesktop.dll</RelativePath>
+        <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+
+  </Target>
+
+</Project>
